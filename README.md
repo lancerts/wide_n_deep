@@ -6,4 +6,4 @@ https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/learn/w
 
 
 ##  2017-06-04
-### Added evaluation monitor and adjusted few settings.
+* Added evaluation monitor and adjusted few settings.
