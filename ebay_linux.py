@@ -82,69 +82,73 @@ def build_estimator(model_dir, model_type, early_stopping_parameters,  wide_opt,
         sparse_interactions = []
 
 
-    # Wide columns and deep columns.
-    wide_columns =  continous + categorical_sparse_hashed + sparse_interactions
+# Wide columns and deep columns.
+wide_columns = continous + categorical_sparse_hashed + sparse_interactions
 
 
 
-    if model_type == "wide":
-      m = tf.contrib.learn.LinearClassifier(model_dir=model_dir, feature_columns=wide_columns,
-                                            optimizer=wide_opt['optimizer'],
-                                            config=tf.contrib.learn.RunConfig(
-                                            save_checkpoints_steps=
-                                            early_stopping_parameters['save_checkpoints_steps'],
-                                            save_checkpoints_secs=None))
+if model_type == "wide":
+    m = tf.contrib.learn.LinearClassifier(model_dir = model_dir,
+        feature_columns = wide_columns,
+        optimizer = wide_opt['optimizer'],
+        config = tf.contrib.learn.RunConfig(
+            save_checkpoints_steps =
+            early_stopping_parameters['save_checkpoints_steps'],
+            save_checkpoints_secs = None))
 
-    elif model_type == "deep":
-      deep_columns = continous + list(tf.contrib.layers.embedding_column(k,
-                                      dimension = deep_opt['embedding_dimensions'])
-                                      for k in categorical_sparse_hashed)
-      m = tf.contrib.learn.DNNClassifier(model_dir=model_dir,
-                                       feature_columns=deep_columns,
-                                       hidden_units= deep_opt['hidden_units'],
-                                       optimizer=deep_opt['optimizer'],
-                                       config=tf.contrib.learn.RunConfig(
-                                      save_checkpoints_steps=
-                                      early_stopping_parameters['save_checkpoints_steps'],
-                                      save_checkpoints_secs=None))
+elif model_type == "deep":
+    deep_columns = continous + list(tf.contrib.layers.embedding_column(k,
+            dimension = deep_opt['embedding_dimensions']) for k in
+        categorical_sparse_hashed)
+m = tf.contrib.learn.DNNClassifier(model_dir = model_dir,
+    feature_columns = deep_columns,
+    hidden_units = deep_opt['hidden_units'],
+    optimizer = deep_opt['optimizer'],
+    config = tf.contrib.learn.RunConfig(
+        save_checkpoints_steps =
+        early_stopping_parameters['save_checkpoints_steps'],
+        save_checkpoints_secs = None))
 
-    else:
-      deep_columns = list(tf.contrib.layers.embedding_column(k,
-                                                             dimension = wide_n_deep_opt['embedding_dimensions'])
-                          for k in categorical_sparse_hashed) + continous
-      m = tf.contrib.learn.DNNLinearCombinedClassifier(
-        model_dir=model_dir,
-        linear_feature_columns=wide_columns,
-        linear_optimizer= wide_n_deep_opt['linear_optimizer'],
-        dnn_feature_columns=deep_columns,
-        dnn_hidden_units= wide_n_deep_opt['hidden_units'],
-        dnn_optimizer=wide_n_deep_opt['dnn_optimizer'],
-        config=tf.contrib.learn.RunConfig(
-          save_checkpoints_steps=
-          early_stopping_parameters['save_checkpoints_steps'],
-          save_checkpoints_secs=None),
-        fix_global_step_increment_bug = Ture)
-    return m
+else :
+    deep_columns = list(tf.contrib.layers.embedding_column(k,
+            dimension = wide_n_deep_opt['embedding_dimensions']) for k in
+        categorical_sparse_hashed) + continous
+m = tf.contrib.learn.DNNLinearCombinedClassifier(
+    model_dir = model_dir,
+    linear_feature_columns = wide_columns,
+    linear_optimizer = wide_n_deep_opt['linear_optimizer'],
+    dnn_feature_columns = deep_columns,
+    dnn_hidden_units = wide_n_deep_opt['hidden_units'],
+    dnn_optimizer = wide_n_deep_opt['dnn_optimizer'],
+    config = tf.contrib.learn.RunConfig(
+        save_checkpoints_steps =
+        early_stopping_parameters['save_checkpoints_steps'],
+        save_checkpoints_secs = None),
+    fix_global_step_increment_bug = Ture)
+return m
 
 
-def train_and_eval(model_dir, model_type, train_steps, early_stopping_parameters,
-                   wide_opt, deep_opt, wide_n_deep_opt, sparse_interactions = False):
-  try:
-      shutil.rmtree(model_dir)
-  except:
-      print("model_dir does not exist.")
+def train_and_eval(model_dir, model_type, train_steps,
+        early_stopping_parameters,
+        wide_opt, deep_opt, wide_n_deep_opt, sparse_interactions = False):
+    try:
+    shutil.rmtree(model_dir)
+except:
+    print("model_dir does not exist.")
 
-  """Train and evaluate the model."""
-  print("model directory = %s" % model_dir)
+""
+"Train and evaluate the model."
+""
+print("model directory = %s" % model_dir)
 
-  validation_monitor = tf.contrib.learn.monitors.ValidationMonitor(
-    input_fn=lambda: input_fn(df_test),
-    every_n_steps=early_stopping_parameters['every_n_steps'],
-    eval_steps=1,
-    early_stopping_metric="auc",
-    early_stopping_metric_minimize=False,
-    early_stopping_rounds=early_stopping_parameters['early_stopping_rounds'])
-
+validation_monitor = tf.contrib.learn.monitors.ValidationMonitor(
+    input_fn = lambda: input_fn(df_test),
+    every_n_steps = early_stopping_parameters['every_n_steps'],
+    eval_steps = 1,
+    early_stopping_metric = "auc",
+    early_stopping_metric_minimize = False,
+    early_stopping_rounds = early_stopping_parameters[
+        'early_stopping_rounds'])
 
 
   with tf.Session() as sess:
